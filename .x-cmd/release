@@ -5,6 +5,7 @@
     #     exit 1
     # }
     git clone git@gitee.com:x-cmd/dns.git
+    git rm --cached dns
     x rmrf ./dns/.github ./dns/dns ./dns/dns-dev
 
     # x rmrf "./data"
