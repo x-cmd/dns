@@ -14,8 +14,10 @@
     x ja t  <./data/X.json  >./data/X.jso
 
 
-    cd dns-dev
-    git add .
-    git commit -m 'auto release'
-    git push origin main
+    rm ./dns-dev
+
+    git add "$(x wsroot)"
+    git commit -m "'auto release'e by $GITHUB_RUN_NUMBER"
+    git push git@github.com:x-cmd/dns main
+    git push git@gitee.com:x-cmd/dns main
 )
