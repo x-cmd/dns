@@ -5,7 +5,7 @@
     #     exit 1
     # }
     git clone git@gitee.com:x-cmd/dns.git
-    rm -rf ./dns/.github ./dns/dns ./dns/dns-dev
+    x rmrf ./dns/.github ./dns/dns ./dns/dns-dev
 
     # x rmrf "./data"
     # mkdir -p data
@@ -16,7 +16,7 @@
     # x ja t  <./data/X.json  >./data/X.jso
 
 
-    rm rf  ./dns-dev
+    x rmrf  ./dns-dev
 
     git add "$(x wsroot)/dns"
     git commit -m "'auto release'e by $GITHUB_RUN_NUMBER"
