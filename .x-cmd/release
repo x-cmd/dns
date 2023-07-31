@@ -1,0 +1,21 @@
+
+(
+    git clone git@github.com:x-cmd/dns-dev.git || {
+        x:error "Fail to clone"
+        exit 1
+    }
+
+    x rmrf "./data"
+    mkdir -p data
+
+    x cp "./dns-dev/data/X.yml" "./data/X.yml"
+
+    x y2j <"./dns-dev/data/X.yml" >./data/X.json
+    x ja t  <./data/X.json  >./data/X.jso
+
+
+    cd dns-dev
+    git add .
+    git commit -m 'auto release'
+    git push origin main
+)
