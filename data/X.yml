@@ -293,4 +293,12 @@ provider:
       - 52.80.66.66
     ipv6:
 
+  Ultimate-Hosts-Blacklist:
+    official: https://github.com/Ultimate-Hosts-Blacklist/Ultimate.Hosts.Blacklist#dns-server
+    ipv4:
+      - 88.198.70.38
+      - 88.198.70.39
+    ipv6:
+      - 2a01:4f8:140:5021::38
+      - 2a01:4f8:140:5021::39
 
