@@ -24,7 +24,7 @@ function encodeToBase64Chunks(text: string): string[] {
   const chunks: string[] = [];
   for (let offset = 0; offset < text.length; offset += SOURCE_CHUNK_SIZE) {
     const slice = text.slice(offset, offset + SOURCE_CHUNK_SIZE);
-    chunks.push(btoa(unescape(encodeURIComponent(slice))));
+    chunks.push(Buffer.from(slice, "utf8").toString("base64"));
   }
   return chunks;
 }
