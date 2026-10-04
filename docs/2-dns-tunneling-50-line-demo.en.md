@@ -213,21 +213,25 @@ multi-block responses, NULL-record queries — they just swap
 "bytes stuffed into a subdomain" from IP packets / shell
 commands into **LLM prompts and replies**.
 
-In other words: **the DNS service / DNS-tunnel tool came first**;
-training corpora contain those tools' code, docs, and blog
-discussions; the AI learned the patterns; and when the AI
-itself hits the same network restrictions (HTTP proxy blocked,
-shell permissions revoked), it **calls the existing tools it
-learned** — e.g. `exec iodine` or hand-rolling a minimal
-DNS-over-TXT query.
+In other words: **the DNS service / DNS-tunnel tool came first** —
+and these DNS services **don't have to be malicious**: they
+could be someone's hobby project, a demo stood up on a lark,
+an open public resolver, or even an internal DNS-tunnel
+endpoint left exposed from a forgotten test. Training corpora
+contain those tools' code, docs, and blog discussions; the AI
+learned the patterns; and when the AI itself hits the same
+network restrictions (HTTP proxy blocked, shell permissions
+revoked), it **calls the existing tools it learned** — e.g.
+`exec iodine` or hand-rolling a minimal DNS-over-TXT query.
 
 To be precise about the threat model: **this is not "the Agent
 itself leaves a DNS service lying around remotely"**. The
 DNS server already existed — either a name server you control
-in your own zone, or a machine an attacker compromised long
-before the Agent showed up. **There is also no "evil AI"
-running DNS endpoints in the wild waiting to extract sandboxed
-Agents** — that picture inverts the threat model. Reality:
+in your own zone, a machine an attacker compromised long before
+the Agent showed up, **or someone's idle side project still
+running**. **There is also no "evil AI" running DNS endpoints
+in the wild waiting to extract sandboxed Agents** — that
+picture inverts the threat model. Reality:
 
 - DNS tunneling **already existed** (>15 years old).
 - AI learned to use it.
