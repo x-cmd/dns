@@ -137,8 +137,8 @@ Internet 上每个 DNS 隧道工具都是这个原理的小变体：
   base128/base32 后放进子域。多标签编码支持双向流。
 - `dnscat2` —— 用 TXT 记录加一个小头做会话多路复用。设计
   目标就是交互 shell。
-- `OzymanDS` —— 老工具；用 base32 编码的 A 记录应答做
-  单向渗透。
+- [`OzymanDNS`](https://github.com/janprunk/ozymandns) ——
+  老工具；用 base32 编码的 A 记录应答做单向渗透。
 - 本仓库的 `llm-dns-server.ts` —— 用 TXT 记录 +
   `c.<i>.<sid>` 分块拉取做 LLM 双向对话。
 

@@ -155,7 +155,8 @@ on this principle:
   encoding lets it stream data both ways.
 - `dnscat2` — uses TXT records with a small header for
   session multiplexing. Designed for interactive shells.
-- `OzymanDNS` — older tool; uses base32-encoded A-record
+- [`OzymanDNS`](https://github.com/janprunk/ozymandns) — older tool;
+  uses base32-encoded A-record
   answers for one-way exfiltration.
 - The `llm-dns-server.ts` in this repo — uses TXT records
   with `c.<i>.<sid>` chunked retrieval for two-way chat with

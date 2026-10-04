@@ -46,6 +46,7 @@ official:
   repo: https://github.com/x-cmd/dns
 related:
   iodine: https://github.com/yarrick/iodine
+  ozymandns: https://github.com/janprunk/ozymandns
   dnscat2: https://github.com/iagox86/dnscat2
   dnscurve: https://dnscurve.org/
   rfc1035: https://datatracker.ietf.org/doc/html/rfc1035

@@ -16,7 +16,8 @@ id: x-dns-2-dns-tunneling-50-line-demo
             IP-over-DNS (iodine) — base32/128 of IP packets
             as subdomains; (b) interactive shells (dnscat2) —
             TXT records with session IDs; (c) one-way
-            exfiltration (OzymanDNS) — base32 of A-records
+            exfiltration ([OzymanDNS](https://github.com/janprunk/ozymandns))
+            — base32 of A-records
             with the data hidden in the answer. This repo's
             LLM-over-DNS is morally identical to (b), with
             the chat protocol replaced by an LLM API call.
