@@ -134,17 +134,25 @@ id: x-dns-2-dns-tunneling-50-line-demo
           en: "How does this compare to iodine/dnscat2?"
         answer:
           en: |
-            Same principle, different encoding. iodine uses
-            NULL-record queries (type 10) with base128
-            subdomains to maximize bytes per query. dnscat2
+            Same principle, different encoding.
+            [`iodine`](https://github.com/yarrick/iodine)
+            uses NULL-record queries (type 10) with base128
+            subdomains to maximize bytes per query. Typical
+            use: building an IP-over-DNS tunnel to reach the
+            Internet from a captive portal (hotel / airport
+            Wi-Fi) or firewalled network where only DNS
+            queries are allowed.
+            [`dnscat2`](https://github.com/iagox86/dnscat2)
             uses TXT records with a small header for session
             multiplexing (one DNS server, many concurrent
-            "channels"). OzymanDNS uses base32 A-record
-            answers for one-way exfiltration (just bytes out,
-            no reply path). The repo's `llm-dns-server.ts`
-            uses TXT records with `c.<i>.<sid>` for chunked
-            retrieval — closest to dnscat2 but with the
-            payload driven by an LLM API call.
+            "channels").
+            [OzymanDNS](https://github.com/janprunk/ozymandns)
+            uses base32 A-record answers for one-way
+            exfiltration (just bytes out, no reply path).
+            The repo's `llm-dns-server.ts` uses TXT records
+            with `c.<i>.<sid>` for chunked retrieval —
+            closest to dnscat2 but with the payload driven
+            by an LLM API call.
         confidence: 9
         reference:
           - docs/2-dns-tunneling-50-line-demo.en.md

@@ -150,9 +150,13 @@ have this repo's `simple.ts` (53 lines).
 Every DNS tunneling tool on the Internet is a slight variation
 on this principle:
 
-- `iodine` — uses NULL-record queries (type 10) and
-  base128/base32 of IP packets as subdomains. Multi-label
-  encoding lets it stream data both ways.
+- [`iodine`](https://github.com/yarrick/iodine) — uses NULL-record
+  queries (type 10) and base128/base32 of IP packets as
+  subdomains. Multi-label encoding lets it stream data both
+  ways. **Typical use**: when you're on hotel / airport Wi-Fi
+  or a firewalled network where normal web traffic is blocked
+  but DNS queries go through, iodine builds an IP-over-DNS
+  tunnel so you can reach the Internet.
 - [`dnscat2`](https://github.com/iagox86/dnscat2) — uses TXT
   records with a small header for
   session multiplexing. Designed for interactive shells.
