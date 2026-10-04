@@ -174,7 +174,35 @@ on this principle:
   with `c.<i>.<sid>` chunked retrieval for two-way chat with
   an LLM.
 
-## How slow is it, really?
+## How slow is it, really? — using iodine as the reference
+
+> "iodine lets you tunnel IPv4 data through a DNS server. This
+> can be useful in situations where Internet access is
+> firewalled, but DNS queries are allowed. It needs a TUN/TAP
+> device to operate. The bandwidth is asymmetrical, with a
+> measured maximum of 680 kbit/s upstream and 2.3 Mbit/s
+> downstream in a wired LAN test network. Realistic sustained
+> throughput on a Wifi network using a carrier-grade DNS cache
+> has been measured at some 50 kbit/s upstream and over 200
+> kbit/s downstream. iodine is the client application, iodined
+> is the server."
+>
+> — [man 8 iodine](https://linux.die.net/man/8/iodine)
+
+[`iodine`](https://github.com/yarrick/iodine) is the **most
+established** of the DNS-tunneling tools — Björn Andersson
+and Erik Ekman started the project around 2009; the
+[GitHub repo](https://github.com/yarrick/iodine) is a mirror
+since 2012, with ~8k ⭐ and still maintained. We pick it
+as the reference because it's the oldest, its man page has
+hard numbers, and other DNS tunnels (dnscat2, OzymanDNS) are
+not meaningfully faster — iodine's data is the practical
+ceiling for DNS-tunnel throughput.
+
+DNS tunneling is **slow in practice** — the iodine numbers
+above (50 kbit/s upstream / 200 kbit/s downstream) are typical.
+The implication is that DNS tunneling is **not a practical
+general-purpose channel** — only the narrowest uses are viable:
 
 DNS tunneling is **slow in practice** — the iodine numbers
 above (50 kbit/s upstream / 200 kbit/s downstream) are typical.

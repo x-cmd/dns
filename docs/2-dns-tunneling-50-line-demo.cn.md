@@ -150,7 +150,33 @@ Internet 上每个 DNS 隧道工具都是这个原理的小变体：
 - 本仓库的 `llm-dns-server.ts` —— 用 TXT 记录 +
   `c.<i>.<sid>` 分块拉取做 LLM 双向对话。
 
-## 实际上有多慢
+## 实际上有多慢 — 以老牌 iodine 为例
+
+> "iodine lets you tunnel IPv4 data through a DNS server. This
+> can be useful in situations where Internet access is
+> firewalled, but DNS queries are allowed. It needs a TUN/TAP
+> device to operate. The bandwidth is asymmetrical, with a
+> measured maximum of 680 kbit/s upstream and 2.3 Mbit/s
+> downstream in a wired LAN test network. Realistic sustained
+> throughput on a Wifi network using a carrier-grade DNS cache
+> has been measured at some 50 kbit/s upstream and over 200
+> kbit/s downstream. iodine is the client application, iodined
+> is the server."
+>
+> — [man 8 iodine](https://linux.die.net/man/8/iodine)
+
+[`iodine`](https://github.com/yarrick/iodine) 是 DNS 隧道
+工具里**最老牌**的一个——项目由 Björn Andersson 和 Erik
+Ekman 起头，源码历史可追溯到 2009 年左右；GitHub mirror 自
+2012 年（[yarrick/iodine](https://github.com/yarrick/iodine)），
+如今已有 ~8k ⭐，至今仍在维护。选它做基准是因为：它最老
+牌、man 文档齐全、有实测数据——其他隧道工具（dnscat2、
+OzymanDNS）的速率不会显著比它高。所以 iodine 的数字可以
+作为"DNS 隧道速率的天花板"参考。
+
+DNS 隧道在**真实场景**里很慢——上文 iodine 的数据是典型水
+平（50 kbit/s 上行 / 200 kbit/s 下行）。这意味着它在实践
+里**并不实用**——除了最窄的应用：
 
 DNS 隧道在**真实场景**里很慢——上文 iodine 的数据是典型水
 平（50 kbit/s 上行 / 200 kbit/s 下行）。这意味着它在实践
