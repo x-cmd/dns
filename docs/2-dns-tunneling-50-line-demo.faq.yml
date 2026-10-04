@@ -48,10 +48,12 @@ id: x-dns-2-dns-tunneling-50-line-demo
 
   - name:
       en: why-it-works
+      cn: 为什么 DNS 能当隐蔽信道
     qa:
-      - id: why-dns-allowed
+      - id: why-udp-53-allowed
         question:
           en: Why is UDP/53 allowed on every network?
+          cn: 为什么 UDP/53 到处都通？
         answer:
           en: |
             Because the alternative is no Internet. DNS
@@ -64,13 +66,23 @@ id: x-dns-2-dns-tunneling-50-line-demo
             universally allowed; the difference is that DNS
             payloads are *unrecognized* by most DPI gear in a
             way that HTTP is not.
+          cn: |
+            因为不放 DNS 就没有 Internet。DNS 解析用户输入的每
+            一个域名；如果强制门户 / 酒店 WiFi / 企业防火墙拦
+            了 UDP/53，那个网络本身就废了。所以网络必须放 DNS，
+            也不能对每一次查询都做深度检测——用户体验撑不住。
+            HTTP/80 同样到处通也是这个道理；区别是 DNS 负载在
+            多数 DPI 设备里被当作"不识别"，HTTP 则没有这个盲
+            区。
         confidence: 9
         reference:
           - docs/2-dns-tunneling-50-line-demo.en.md
+          - docs/2-dns-tunneling-50-line-demo.cn.md
 
       - id: why-not-inspected
         question:
           en: Why don't networks inspect DNS payloads?
+          cn: 为什么多数网络不检查 DNS 负载？
         answer:
           en: |
             Three reasons. (1) Volume: a busy resolver does
@@ -83,13 +95,51 @@ id: x-dns-2-dns-tunneling-50-line-demo
             indistinguishable from every other. The default
             logging mode is therefore minimal (counts,
             errored names, top queried zones).
+          cn: |
+            三个原因。（1）量太大——一个繁忙的解析器每秒处理
+            上万个查询，全量 DPI 太贵。（2）隐私合规——存储
+            完整查询字符串可能触发 GDPR / 数据留存义务，单
+            纯记 NXDOMAIN 计数则不会。（3）协议本身没有"敏感
+            负载"标记位——每条查询长得都一样，没法区分。默认
+            日志模式因此只记计数、错误域名、热门顶级域。
         confidence: 8
         reference:
           - docs/2-dns-tunneling-50-line-demo.en.md
+          - docs/2-dns-tunneling-50-line-demo.cn.md
+
+      - id: why-you-control-the-answer
+        question:
+          en: "Why does \"you control the answer\" make DNS tunneling work?"
+          cn: 为什么"应答来自你控制的服务器"让 DNS 隧道成立？
+        answer:
+          en: |
+            Because once you own a zone (e.g. `example.com`),
+            your DNS server can **answer any TXT query with
+            arbitrary content**. The client only needs to
+            know the zone name and the server IP. The cost
+            is real — DNS is slow, payloads are small,
+            round-trips are chatty — but for "low-and-slow"
+            exfiltration (a few MB per day), nothing is
+            handier. This is what lets DNS tunneling put
+            *anything* on the wire over UDP/53: the egress
+            endpoint is fully under the attacker's control.
+          cn: |
+            因为你拥有 zone（比如 `example.com`）之后，可以让
+            它的权威服务器**对任何 TXT 查询都返回任意内容**。
+            客户端只要知道 zone 名和服务 IP。代价是真实存
+            在的——DNS 慢、负载小、往返啰嗦——但对于"低慢"渗
+            透（每天几 MB），没有比它更顺手的载体。这也是 DNS
+            隧道能把任何东西塞进 UDP/53 出去的根本原因：出口
+            在哪一段流量里**完全可控**。
+        confidence: 9
+        reference:
+          - docs/2-dns-tunneling-50-line-demo.en.md
+          - docs/2-dns-tunneling-50-line-demo.cn.md
 
       - id: throughput
         question:
           en: How fast can DNS tunneling actually exfiltrate?
+          cn: DNS 隧道实际能多快？
         answer:
           en: |
             Theoretical: bounded by the per-packet overhead.
@@ -104,9 +154,18 @@ id: x-dns-2-dns-tunneling-50-line-demo
             variant in this repo is much slower because it
             waits for the LLM API to respond before serving
             the next chunk.
+          cn: |
+            理论上：受单包开销限制。每段数据需要一次 DNS 查询 +
+            一次 DNS 应答，往返就是网络 RTT。跨大陆 WAN（50 ms），
+            每查询 200 字节块，约 32 kbps——传凭据行，传传视频慢。
+            多数公开报告里，iodine / dnscat2 走家用上行实测
+            50 kbps–500 kbps；调好的低 RTT 链路可到低 Mbps。
+            本仓库的 LLM 变体更慢——必须等 LLM API 回完才下发
+            下一块。
         confidence: 8
         reference:
           - docs/2-dns-tunneling-50-line-demo.en.md
+          - docs/2-dns-tunneling-50-line-demo.cn.md
 
   - name:
       en: the-demo
