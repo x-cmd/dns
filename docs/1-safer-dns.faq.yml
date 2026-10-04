@@ -1,0 +1,207 @@
+id: x-dns-1-safer-dns
+
+<data>:
+  - name:
+      en: dot
+    qa:
+      - id: what-is-dot
+        question:
+          en: What does DoT give you, exactly?
+        answer:
+          en: |
+            TLS 1.2/1.3 on TCP/853. Every DNS query is a
+            2-byte-big-endian length prefix plus the raw DNS
+            payload on the TLS stream. Resolvers and clients
+            establish a long-lived TLS session; the cost is one
+            TCP + TLS handshake per resolver, then ~zero per
+            query. DoT is RFC 7858 (2016). Deployed by every
+            major public resolver (Cloudflare, Google, Quad9,
+            AdGuard).
+        confidence: 9
+        reference:
+          - docs/1-safer-dns.en.md
+
+      - id: dot-port-block
+        question:
+          en: Can DoT be blocked by a firewall?
+        answer:
+          en: |
+            Yes, trivially. A DPI rule on TCP/853 catches DoT
+            without ambiguity; some captive portals and
+            corporate firewalls block it on sight. That's the
+            main reason DoH exists: it runs on the same port
+            as the rest of HTTPS, so the only way to block it
+            is to break the web.
+        confidence: 9
+        reference:
+          - docs/1-safer-dns.en.md
+
+  - name:
+      en: doh
+    qa:
+      - id: doh-uri-template
+        question:
+          en: What's the standard DoH URI template?
+        answer:
+          en: |
+            RFC 8484 defines two forms: `GET /dns-query?dns=<base64url>` and
+            `POST /dns-query` with body `application/dns-message`.
+            Public resolvers expose endpoints like
+            `https://1.1.1.1/dns-query`,
+            `https://dns.quad9.net/dns-query`,
+            `https://dns.google/dns-query`. The body is the
+            raw DNS message bytes; the response is the raw DNS
+            message bytes; status is `200 OK` even for
+            `NXDOMAIN` (the DNS-level error is in the body).
+        confidence: 9
+        reference:
+          - docs/1-safer-dns.en.md
+
+      - id: doh-browser-default
+        question:
+          en: Which browsers and OSes default to DoH today?
+        answer:
+          en: |
+            Firefox: from 2018 (US-only at first, expanded since).
+            Chrome: from 2021 (Android first, desktop when system
+            DNS is DoH-capable). Safari / iOS: system-wide DoH
+            configurable in network settings since iOS 14.
+            Android: Private DNS setting since Android 9 (Pie).
+            Windows: native DoH support since Windows 11.
+            Linux: systemd-resolved since v239 (2018) supports
+            DoH; distributions vary on whether it's the default.
+        confidence: 9
+        reference:
+          - docs/1-safer-dns.en.md
+
+  - name:
+      en: doq
+    qa:
+      - id: why-doq
+        question:
+          en: Why DoQ when DoH exists?
+        answer:
+          en: |
+            Three reasons. (1) **No head-of-line blocking** —
+            QUIC streams multiplex, so one slow query doesn't
+            stall the others on the same connection. (2)
+            **0-RTT resumption** — coming back to the same
+            resolver skips the handshake. (3) **UDP semantics
+            match DNS** — DNS-over-QUIC feels like native DNS
+            with encryption, not HTTPS-encapsulated DNS. The
+            catch: UDP/853 is an even *more* obvious signal
+            for DPI than TCP/853, and browser support is
+            sparse.
+        confidence: 8
+        reference:
+          - docs/1-safer-dns.en.md
+
+      - id: doq-vs-dot
+        question:
+          en: DoQ vs DoT — which is "better"?
+        answer:
+          en: |
+            DoQ is strictly better on paper (no HoL blocking,
+            0-RTT, UDP), but DoT is more deployed (every
+            major resolver since 2019) and DoH is more
+            firewall-friendly. DoQ is the right choice for a
+            modern client talking to a modern resolver; DoH
+            is the right choice if you don't control the path.
+            For most users today DoH is the pragmatic answer.
+        confidence: 8
+        reference:
+          - docs/1-safer-dns.en.md
+
+  - name:
+      en: dnssec
+    qa:
+      - id: what-dnssec-does-not
+        question:
+          en: What does DNSSEC NOT solve?
+        answer:
+          en: |
+            Three things. (1) **It doesn't encrypt** —
+            DNSSEC-signed queries are still plaintext on the
+            wire. (2) **It doesn't hide the query** — a
+            validating resolver still sees what you asked.
+            (3) **It doesn't help against a hostile TLD** —
+            if `.com` is signed but maliciously re-delegates
+            `example.com` to attacker nameservers, the chain
+            still validates. DNSSEC authenticates the chain,
+            it doesn't vouch for the operators.
+        confidence: 9
+        reference:
+          - docs/1-safer-dns.en.md
+
+      - id: dnssec-deploy
+        question:
+          en: How much of the DNS is DNSSEC-signed today?
+        answer:
+          en: |
+            Root zone: 100% (since 2010). TLDs: ~35% by zone,
+            ~90% of "real" TLDs (`.com`, `.net`, `.org`, most
+            ccTLDs). Second-level zones: ~5% — the long tail
+            of `example.com` is mostly unsigned. Most public
+            resolvers (Cloudflare, Google, Quad9) validate by
+            default; many ISP resolvers don't.
+        confidence: 8
+        reference:
+          - docs/1-safer-dns.en.md
+
+      - id: dnssec-failure-mode
+        question:
+          en: What happens when DNSSEC validation fails?
+        answer:
+          en: |
+            The resolver returns **SERVFAIL** (RCODE 2) — the
+            same error as a server crash or network outage.
+            There's no way for a client to distinguish "DNS is
+            down" from "DNSSEC validation rejected the
+            answer". This is the main operational pain point
+            of DNSSEC: a single misconfigured DS record can
+            break an entire zone, and the failure looks like
+            generic DNS failure to the user. Tools like
+            `drill -TD` or `delv` help diagnose.
+        confidence: 9
+        reference:
+          - docs/1-safer-dns.en.md
+
+  - name:
+      en: privacy
+    qa:
+      - id: ecs-leak
+        question:
+          en: What does ECS leak?
+        answer:
+          en: |
+            EDNS0 Client Subnet tells the authoritative
+            *which client subnet* the query came from, so it
+            can return geo-distributed answers (e.g. a CDN
+            edge closer to you). The privacy cost: the
+            authoritative learns your IPv4 /24 (or /48 for
+            IPv6) even on DoH. Cloudflare 1.1.1.1 masks ECS
+            by replacing the last octet with `0`. Other
+            resolvers either don't send ECS or send the full
+            prefix.
+        confidence: 9
+        reference:
+          - docs/1-safer-dns.en.md
+
+      - id: odoh
+        question:
+          en: What is Oblivious DoH?
+        answer:
+          en: |
+            `oDoH`, draft-irtf-pearg-oblivious-dns. Adds a
+            third party (the relay) between you and the
+            resolver. The query is encrypted to the resolver
+            with the resolver's public key; the relay sees
+            your IP but not the query; the resolver sees the
+            query but not your IP. Neither party can
+            correlate the two. Adoption is early (Cloudflare
+            + some relays); the cryptographic overhead is
+            non-trivial. It is the closest thing to "private
+            DNS" available today without a VPN or Tor.
+        confidence: 8
+        reference:
+          - docs/1-safer-dns.en.md

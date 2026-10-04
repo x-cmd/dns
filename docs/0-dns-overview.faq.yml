@@ -1,0 +1,179 @@
+id: x-dns-0-dns-overview
+
+<data>:
+  - name:
+      en: dns-basics
+    qa:
+      - id: what-is-dns
+        question:
+          en: What is DNS, really?
+        answer:
+          en: |
+            A globally distributed, hierarchical database that
+            translates names to identifiers. It runs on UDP/53
+            (and TCP/53 for big answers). The hierarchy is
+            dot-separated labels read right-to-left: `.` is the
+            root, `.com` is a TLD zone, `example.com` is a
+            second-level zone, `www.example.com` is a host
+            inside that zone. Every zone has authoritative
+            name servers that own the records; resolvers
+            (caches) sit between the client and the authority
+            to make it fast.
+        confidence: 9
+        reference:
+          - docs/0-dns-overview.en.md
+
+      - id: iterative-vs-recursive
+        question:
+          en: "Iterative vs. recursive — what's the difference?"
+        answer:
+          en: |
+            **Recursive** = "do all the work for me and bring
+            back the answer." **Iterative** = "tell me who to
+            ask next." When you `dig` a name, your stub
+            resolver makes a *recursive* query to its recursive
+            resolver (8.8.8.8, ISP, …). That resolver then
+            issues *iterative* queries: to a root server
+            ("who serves .com?"), then to a .com server ("who
+            serves example.com?"), then to example.com's
+            authoritative ("here's the A record"). The client
+            sees one round trip; the resolver does the walking.
+        confidence: 9
+        reference:
+          - docs/0-dns-overview.en.md
+
+      - id: why-13-root-servers
+        question:
+          en: Why "13 root servers"?
+        answer:
+          en: |
+            Historical UDP packet size limit, not a
+            protocol-level constant. A DNS response with all 13
+            root server A records fits in a 512-byte UDP
+            payload (with name compression), so the resolver
+            can get the entire root-hint set in one shot. Each
+            "letter" (A through M) is actually a *cluster* of
+            anycast servers spread across hundreds of cities;
+            the literal server count is in the thousands.
+        confidence: 8
+        reference:
+          - docs/0-dns-overview.en.md
+
+      - id: ttl-meaning
+        question:
+          en: What does the TTL field actually do?
+        answer:
+          en: |
+            It is the **resolver's promise** — "you may serve
+            this answer from cache for the next N seconds
+            without re-asking the upstream." A TTL of 300 means
+            "5 minutes". Setting TTL too low adds load to the
+            authoritative; setting it too high means changes
+            propagate slowly. Common patterns: 300s for
+            load-balanced / failover endpoints, 3600s for
+            stable A records, 86400s for NS delegations. The
+            zone's SOA `MINIMUM` field is the cap for negative
+            caching (NXDOMAIN).
+        confidence: 9
+        reference:
+          - docs/0-dns-overview.en.md
+
+  - name:
+      en: packet
+    qa:
+      - id: header-format
+        question:
+          en: What's in the DNS header?
+        answer:
+          en: |
+            12 bytes total: `ID (2)` `FLAGS (2)` `QDCOUNT (2)`
+            `ANCOUNT (2)` `NSCOUNT (2)` `ARCOUNT (2)`. ID is
+            echoed back so the client can match the response to
+            the request. FLAGS packs: QR (0=query, 1=response),
+            opcode (0=query, 5=update), AA (authoritative
+            answer), TC (truncated), RD (recursion desired),
+            RA (recursion available), Z (reserved), AD (DNSSEC
+            validated), CD (DNSSEC disabled), RCODE
+            (0=NOERROR, 3=NXDOMAIN, …). The four counts are
+            how many records follow in each section.
+        confidence: 9
+        reference:
+          - docs/0-dns-overview.en.md
+
+      - id: name-compression
+        question:
+          en: How does DNS name compression work?
+        answer:
+          en: |
+            A label byte of `0xC0` followed by a 14-bit offset
+            says "this name is the same as the name starting at
+            that offset in the message." It's how a typical
+            query/answer pair stays under 100 bytes — every
+            repeated name is just a 2-byte pointer. The offset
+            12 is the start of the question section, so
+            `0xC0 0x0C` is the canonical "same as the
+            question" reference.
+        confidence: 9
+        reference:
+          - docs/0-dns-overview.en.md
+
+      - id: udp-payload-limit
+        question:
+          en: Why is the practical UDP limit 1232 bytes?
+        answer:
+          en: |
+            RFC 6891 (EDNS0) lets clients ask for up to 4096
+            bytes per response, but most resolvers and
+            authoritative servers default to **1232** because
+            it fits inside one Ethernet frame on a typical
+            path without IP fragmentation (IPv6 mandates
+            no-in-network-fragmentation; IPv4 fragmentation
+            is unreliable and often blocked). If a response
+            would exceed the negotiated size, the server sets
+            the TC (truncated) flag and the client retries
+            over TCP.
+        confidence: 9
+        reference:
+          - docs/0-dns-overview.en.md
+
+  - name:
+      en: limits
+    qa:
+      - id: what-dns-is-not
+        question:
+          en: What does DNS NOT do?
+        answer:
+          en: |
+            Three big things. (1) **No transport security** —
+            classic DNS is plaintext UDP/53, so any on-path
+            observer can see and tamper with the answer. (2)
+            **No answer authentication** — a forged response
+            is accepted unless DNSSEC is in play. (3) **No
+            policy** — caching, filtering, logging are
+            entirely the resolver's choice; there's no
+            protocol-level "no logging" flag. See
+            [1. Safer DNS](./1-safer-dns.en.md) for the fixes.
+        confidence: 9
+        reference:
+          - docs/0-dns-overview.en.md
+          - docs/1-safer-dns.en.md
+
+      - id: dns-vs-http
+        question:
+          en: Why use DNS at all when we have HTTP?
+        answer:
+          en: |
+            Three reasons that make DNS irreplaceable. (1)
+            It's *the* bootstrapping protocol — to fetch any
+            HTTPS URL you must first resolve its hostname, so
+            HTTP depends on DNS. (2) It's aggressively cached
+            at every layer, which lets the root servers serve
+            the whole Internet. (3) UDP/53 is the most
+            consistently permitted protocol across firewalls
+            and captive portals (HTTP and HTTPS are not) —
+            which is also why DNS becomes a covert channel;
+            see [2. DNS tunneling](./2-dns-tunneling-50-line-demo.en.md).
+        confidence: 9
+        reference:
+          - docs/0-dns-overview.en.md
+          - docs/2-dns-tunneling-50-line-demo.en.md

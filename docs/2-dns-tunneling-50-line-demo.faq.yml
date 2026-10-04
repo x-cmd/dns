@@ -1,0 +1,198 @@
+id: x-dns-2-dns-tunneling-50-line-demo
+
+<data>:
+  - name:
+      en: definition
+    qa:
+      - id: what-is-dns-tunneling
+        question:
+          en: What is DNS tunneling?
+        answer:
+          en: |
+            Using DNS as a data channel, not as a name
+            resolver. Both the query name and the answer carry
+            opaque user data; the actual name-resolution work
+            is incidental. The most common forms are (a)
+            IP-over-DNS (iodine) — base32/128 of IP packets
+            as subdomains; (b) interactive shells (dnscat2) —
+            TXT records with session IDs; (c) one-way
+            exfiltration (OzymanDNS) — base32 of A-records
+            with the data hidden in the answer. This repo's
+            LLM-over-DNS is morally identical to (b), with
+            the chat protocol replaced by an LLM API call.
+        confidence: 9
+        reference:
+          - docs/2-dns-tunneling-50-line-demo.en.md
+
+      - id: legal
+        question:
+          en: Is DNS tunneling legal?
+        answer:
+          en: |
+            The technique itself is legal — it's just
+            UDP/53 traffic between consenting endpoints. The
+            illegality, if any, is in the *purpose*: tunneling
+            to bypass a corporate firewall or to exfiltrate
+            data without authorization is almost always a
+            policy violation or a crime. This page is a
+            research/educational demo for understanding the
+            protocol surface, not a how-to for evading a
+            specific network. If you're an operator trying to
+            defend against this, see the "Defenses" section
+            of [the article](./2-dns-tunneling-50-line-demo.en.md).
+        confidence: 9
+        reference:
+          - docs/2-dns-tunneling-50-line-demo.en.md
+
+  - name:
+      en: why-it-works
+    qa:
+      - id: why-dns-allowed
+        question:
+          en: Why is UDP/53 allowed on every network?
+        answer:
+          en: |
+            Because the alternative is no Internet. DNS
+            resolves every hostname the user types; if a
+            captive portal blocked UDP/53 the portal itself
+            would be useless. So networks have to let DNS
+            through, and they can't realistically deep-inspect
+            every query without making the user experience
+            intolerable. This is the same reason HTTP/80 is
+            universally allowed; the difference is that DNS
+            payloads are *unrecognized* by most DPI gear in a
+            way that HTTP is not.
+        confidence: 9
+        reference:
+          - docs/2-dns-tunneling-50-line-demo.en.md
+
+      - id: why-not-inspected
+        question:
+          en: Why don't networks inspect DNS payloads?
+        answer:
+          en: |
+            Three reasons. (1) Volume: a busy resolver does
+            tens of thousands of qps; full-payload DPI is
+            expensive. (2) Privacy regulation: storing full
+            query strings may trigger GDPR / data-retention
+            obligations that mere NXDOMAIN counts don't. (3)
+            The DNS protocol has no way to mark "this query
+            contains sensitive payload" — every query is
+            indistinguishable from every other. The default
+            logging mode is therefore minimal (counts,
+            errored names, top queried zones).
+        confidence: 8
+        reference:
+          - docs/2-dns-tunneling-50-line-demo.en.md
+
+      - id: throughput
+        question:
+          en: How fast can DNS tunneling actually exfiltrate?
+        answer:
+          en: |
+            Theoretical: bounded by the per-packet overhead.
+            Each chunk of data needs one DNS query and one
+            DNS response; the round-trip is the network RTT.
+            Over a continental WAN (50ms) with 200-byte chunks
+            per query, you get about 32 kbps — fine for
+            credentials, slow for video. Most public writeups
+            report real-world rates of 50 kbps–500 kbps for
+            iodine / dnscat2 over residential uplinks; a
+            tuned, low-RTT link can hit low-Mbps. The LLM
+            variant in this repo is much slower because it
+            waits for the LLM API to respond before serving
+            the next chunk.
+        confidence: 8
+        reference:
+          - docs/2-dns-tunneling-50-line-demo.en.md
+
+  - name:
+      en: the-demo
+    qa:
+      - id: 50-line-minimum
+        question:
+          en: "What's the minimum to demo the principle?"
+        answer:
+          en: |
+            ~20 lines of code: parse the UDP query, take the
+            question name, drop the trailing label, encode it
+            as a TXT record, send it back. The repo's
+            `llm-dns-server/echo.ts` (22 lines) is exactly
+            this. You don't need an LLM, a cache, auth, or
+            any of the production polish to demonstrate the
+            data path; the principle is "DNS can carry bytes
+            in both directions through any firewall that lets
+            UDP/53 through."
+        confidence: 9
+        reference:
+          - docs/2-dns-tunneling-50-line-demo.en.md
+
+      - id: real-tools
+        question:
+          en: "How does this compare to iodine/dnscat2?"
+        answer:
+          en: |
+            Same principle, different encoding. iodine uses
+            NULL-record queries (type 10) with base128
+            subdomains to maximize bytes per query. dnscat2
+            uses TXT records with a small header for session
+            multiplexing (one DNS server, many concurrent
+            "channels"). OzymanDNS uses base32 A-record
+            answers for one-way exfiltration (just bytes out,
+            no reply path). The repo's `llm-dns-server.ts`
+            uses TXT records with `c.<i>.<sid>` for chunked
+            retrieval — closest to dnscat2 but with the
+            payload driven by an LLM API call.
+        confidence: 9
+        reference:
+          - docs/2-dns-tunneling-50-line-demo.en.md
+
+  - name:
+      en: defenses
+    qa:
+      - id: how-to-defend
+        question:
+          en: I'm a network operator. How do I defend against this?
+        answer:
+          en: |
+            Five layers, in order of cost-effectiveness.
+            (1) **Force DNS to your own resolver** (DHCP
+            option 6 + 802.1X) and firewall block direct
+            egress on 53/tcp+udp; clients can only reach
+            *your* resolver. (2) **Inspect payloads** for
+            long high-entropy subdomains (base32/64 of
+            binary data) and oversized TXT answers
+            (>200 bytes is unusual for legitimate use).
+            (4) **Require DNSSEC validation** and reject
+            unsigned zones; most naive tunnels don't bother
+            signing. (5) **Deploy DoH for clients** so the
+            query goes inside HTTPS to a known resolver;
+            payload inspection becomes impossible without
+            a TLS-MITM, which is itself detectable.
+        confidence: 9
+        reference:
+          - docs/2-dns-tunneling-50-line-demo.en.md
+          - docs/1-safer-dns.en.md
+
+      - id: defense-evasion
+        question:
+          en: Can a determined attacker evade all those defenses?
+        answer:
+          en: |
+            Yes, with effort. Slow rate (1 query per minute)
+            evades rate-limiting. Low-entropy subdomain
+            encoding (using common dictionary words as
+            labels instead of base32) evades entropy checks.
+            DNSSEC signing is straightforward — it costs
+            nothing to publish a signed zone. DoH to a
+            public resolver (1.1.1.1) bypasses all
+            DNS-layer inspection on the path; the only
+            counter is to firewall outbound 443 to non-DoH
+            hosts, which breaks a lot of legitimate HTTPS.
+            The goal of defense is to raise the cost so
+            that DNS is no longer the *easiest* channel,
+            not to make it impossible.
+        confidence: 8
+        reference:
+          - docs/2-dns-tunneling-50-line-demo.en.md
+          - docs/1-safer-dns.en.md

@@ -1,0 +1,173 @@
+---
+x-title: x-cmd/dns —— DNS 隧道，50 行讲明原理
+x-desc: 什么是"DNS 隧道"、为什么它能当隐蔽信道、以及一个 50 行的原理 demo —— Deno UDP 服务把 LLM 回答当 TXT 记录返回。
+x-sidebar: DNS 隧道
+x-keywords: dns, 隧道, 隐蔽信道, dns 渗透, iodine, dnscat2, txt 记录, udp 53, 防火墙绕过, 强制门户, dig, 走查
+x-json-ld:
+  '@context': https://schema.org
+  '@graph':
+    - '@type': TechArticle
+      headline: 'DNS 隧道 —— 是什么，以及 50 行讲原理'
+      inLanguage: 'zh-CN'
+      about: 'DNS 作为隐蔽信道；LLM-over-DNS 变体'
+---
+
+# DNS 隧道 —— 是什么，以及 50 行讲原理
+
+> "DNS 隧道"就是把 DNS 当数据通道用，而不是当名字解析用。
+> 原理和这仓库里跑的一样 —— DNS 服务用 TXT 响应返回任意
+> 字节；远端的客户端把这些字节拼成消息。本页讲原理，并走
+> 查一个能跑的 50 行 demo。
+
+> 仓库里真正的 `echo.ts`（22 行）和 `simple.ts`（53 行）
+> 就是这个模式的工业版。下面把核心数据路径之外的东西全
+> 剥掉，只留原理。
+
+## "DNS 隧道"是什么意思
+
+DNS 的常规用法是 **查询名** 是问题、**应答** 是答案。
+DNS 隧道里，问题与答案都是 **不透明的负载** —— 名字和
+TXT 记录承载用户数据，真正的"解析"反而无关紧要。DNS
+协议只是个方便的包络，装着 UDP 包：
+
+- 几乎所有防火墙都放行（UDP/53 自 1995 年以来在我们遇过
+  的每个网络里都通）；
+- 默认不被检查（多数网络不记 *完整* DNS 负载，只记
+  NXDOMAIN 计数）；
+- 应答来自你控制的服务器（你是某 zone 的权威）。
+
+最著名的工具是 `iodine` 和 `dnscat2`。两者都在 DNS 之上搭
+建 IP 隧道 —— 也就是让 DNS 协议一字节一字节地承载任意
+IPv4/IPv6 流量，跟"VPN over port 53"差不多。
+
+## 为什么 DNS 能当隐蔽信道
+
+三个原因让 DNS 成为互联网上被滥用最多的协议：
+
+1. **UDP/53 到处都通。** 强制门户、酒店 WiFi、企业防火
+   墙 —— 都要放 DNS，因为不放就没有 Internet。DoH
+  （HTTPS/443）也一样，但 DoH 是新东西（2018 后），只有
+  部分网络会封明文 DNS。
+2. **多数网络不检查负载。** 它们数查询、记 *解析过哪些名
+   字*，但很少解析问答字节。像 `aaaa.bbbb.cccc.example.com`
+   的查询看似正常，除非有人手动解码 base32 子域。
+3. **应答来自你控制的服务器。** 你拥有 zone（`example.com`）
+   之后，可以让它回答任何 TXT 查询。客户端只要知道 zone
+   名和服务 IP 就行。代价是真实存在的 —— DNS 慢、负载小、
+   往返啰嗦 —— 但对于"低慢"渗透（每天几 MB），没有比它
+   更顺手的。
+
+## 50 行 demo —— 一个文件讲明原理
+
+下面是最小可行的 DNS 隧道应答器。完整文件在
+[`llm-dns-server/echo.ts`](../llm-dns-server/echo.ts)；这
+里加了注释。
+
+```ts
+// llm-dns-server/echo.ts —— 纯透传 DNS 应答器。
+// 每条 TXT 查询都把它的问题名（剥掉最后一个标签）作为
+// TXT 记录返回。无 LLM、无缓存、无认证。
+import * as dp from "npm:dns-packet@5.6.1";
+import { Buffer } from "node:buffer";
+import dgram from "node:dgram";
+
+const PORT = parseInt(Deno.env.get("DNS_PORT") ?? "53", 10);
+
+// 应答一条 DNS 查询。拿到问题名，剥掉最后一个标签，作为
+// TXT 记录返回。
+const reply = (raw: Uint8Array) => {
+  const p = dp.decode(Buffer.from(raw));       // 解析 UDP 字节
+  const q = p.questions[0];                    // 第一个问题
+  const echo = q.name.replace(/\.[^.]+$/, ""); // 剥最后一段
+  const bufs: Buffer[] = [];                   // 255 字节字符串
+  for (let i = 0; i < echo.length; i += 255)
+    bufs.push(Buffer.from(echo.slice(i, i + 255), "utf8"));
+  return new Uint8Array(dp.encode({            // 构建响应
+    id: p.id, type: "response", flags: dp.AUTHORITATIVE_ANSWER,
+    questions: [q],
+    answers: [{ name: q.name, type: "TXT",
+                class: "IN", ttl: 60, data: bufs }],
+  }));
+};
+
+// UDP 服务。每条消息一行：解析、应答、回送。
+const sock = dgram.createSocket("udp4");
+sock.on("message", (b, r) => sock.send(reply(b), r.port, r.address));
+sock.on("error", e => console.error(e));
+sock.bind(PORT, () => console.log(`DNS echo on :${PORT}`));
+```
+
+就这么多。**50 行**，含 import 与 sock.bind 端的样板。整
+条数据路径就是 4 行的 `reply` 函数：**parse → strip →
+build → return**。
+
+### 每一行的作用
+
+| 行 | 作用 |
+| --- | --- |
+| `dp.decode(Buffer.from(raw))` | 把 30 字节的 DNS 查询解析为 `{ id, flags, questions, … }`。`Buffer.from(Uint8Array)` 因为 `dns-packet` 期待 Node Buffer。 |
+| `q.name.replace(/\.[^.]+$/, "")` | 把 FQDN `hello.world.x` 变成 `hello.world`。最后一段是"TLD"，丢掉。 |
+| `for ... bufs.push(...)` | dns-packet ≤5.6.1 在 256 字节字符串处的 bug：编码前先拆成 ≤255 字节 Buffer 块。 |
+| `dp.encode({ id: p.id, type: "response", ... })` | 构建响应：原 ID、置 QR + AA 标志、把问题拷回去、加一条 TXT 答案。 |
+| `sock.send(reply(b), r.port, r.address)` | 把字节发回客户端的源端口。 |
+
+### 试一下
+
+```sh
+# 1. 跑服务（非特权端口，无需 sudo）
+DNS_PORT=15353 deno run -A echo.ts
+
+# 2. 另一个终端查询
+dig @127.0.0.1 -p 15353 "hello.world.x" TXT +short
+# → "hello.world"
+
+dig @127.0.0.1 -p 15353 "we.are.tunneling.through.dns.x" TXT +short
+# → "we.are.tunneling.through.dns"
+```
+
+这就是原理：30 字节 UDP 包进，50 字节 UDP 包出，中间的字
+节就是查询名里塞的东西。前面再加个 LLM，就是本仓库的
+`simple.ts`（53 行）。
+
+## 为什么这不科幻
+
+Internet 上每个 DNS 隧道工具都是这个原理的小变体：
+
+- `iodine` —— 用 NULL 记录查询（type 10），把 IP 包
+  base128/base32 后放进子域。多标签编码支持双向流。
+- `dnscat2` —— 用 TXT 记录加一个小头做会话多路复用。设计
+  目标就是交互 shell。
+- `OzymanDS` —— 老工具；用 base32 编码的 A 记录应答做
+  单向渗透。
+- 本仓库的 `llm-dns-server.ts` —— 用 TXT 记录 +
+  `c.<i>.<sid>` 分块拉取做 LLM 双向对话。
+
+## 防御 —— 网络运营者能做的
+
+如果你运营网络，想堵住这个：
+
+1. **强制 DNS 走自己的解析器**（DHCP option 6 + 802.1X），
+   在防火墙上 **封直连 53/tcp+udp**。客户端再不能直接联系
+   外部权威，所有查询必须经你。
+2. **检查问答负载。** 找长、高熵的子域子域（base32/64 二
+   进制数据）和异常长的 TXT 答案。
+3. **限速并限制 TXT 应答大小。** 正常 TXT 记录 < 200 字
+   节；隧道常接近 4 KiB。
+4. **强制 DNSSEC 验证，拒未签名的 zone。** 这能搞坏不懂
+   签 zone 的朴素隧道（多数不懂）。
+5. **客户端上 DoH**。所有查询塞到 HTTPS 里发到已知解析
+   器，不做 TLS-MITM 就看不到内容。
+
+没有哪个是银弹；有耐心的攻击者都能绕过。目的是抬高成本，
+让 DNS 不再是最容易的那条路。
+
+## 延伸阅读
+
+- [0. DNS 综述](./0-dns-overview.cn.md) —— 本文假设的协议
+  表面。
+- [1. 更安全的 DNS](./1-safer-dns.cn.md) —— DoH/DoT/DoQ
+  是同一枚硬币的 *防御* 面。
+- [`llm-dns-server/echo.ts`](../llm-dns-server/echo.ts) ——
+  真正的 22 行实现。
+- [`llm-dns-server/simple.ts`](../llm-dns-server/simple.ts) ——
+  同一骨架上的 53 行 LLM 变体。
