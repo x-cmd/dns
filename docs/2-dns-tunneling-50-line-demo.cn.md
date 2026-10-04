@@ -141,12 +141,12 @@ DNS 隧道 2000 年代中期就开始有原型（[hdcp](https://www.root.org/~ny
 2009 年 iodine 出来之后技术成熟。**但要清楚这不是"正当使用"**——
 所谓"绕过网络限制"本身就是未经授权的网络出口行为，是企业
 / 校园网安全策略明确要拦的。iodine 在 OpenWrt、各路由器发行版
-里被归到 **network penetration tools**，不是 networking tools。
+里被归到 **网络穿透工具**，不是网络工具。
 
 之所以要强调这一点，是因为 AI 时代常看到一种美化说辞："DNS
-隧道只是个工具，绕过 captive portal 是合理需求"——这种说法
-偷换了概念：被 captive portal 限制是因为**该网络不允许你不
-交钱 / 不登录就出网**，借助 DNS 绕过等于不交钱拿服务，跟
+隧道只是个工具，绕过强制门户（captive portal）是合理需求"——
+这种说法偷换了概念：被强制门户限制是因为**该网络不允许你
+不交钱 / 不登录就出网**，借助 DNS 绕过等于不交钱拿服务，跟
 "用工具翻墙"性质一样。
 
 常见的使用场景——但仍然是**未经授权的流量走私**——例如：
@@ -172,8 +172,8 @@ DNS 隧道 2000 年代中期就开始有原型（[hdcp](https://www.root.org/~ny
 - [`deoxynet/llm-dns-proxy`](https://github.com/deoxynet/llm-dns-proxy) ——
   自述"LLM over DNS for WiFi Captive Portal Bypass"。~6 ⭐。
 - [`Shell-Company/dumbdns`](https://github.com/Shell-Company/dumbdns) ——
-  "an LLM client implemented in a DNS server using TXT queries
-  for prompts"。**Go**，2024 年中创建，~7 ⭐。
+  自述："在 DNS 服务器里实现的 LLM 客户端，用 TXT 查询收发
+  prompt"。**Go**，2024 年中创建，~7 ⭐。
 
 它们底层**复用**的就是前 LLM 时代那些成熟的 DNS 隧道技术
 （base32/128 编码子域、TXT 多块响应、NULL 记录查询等等），
@@ -224,18 +224,16 @@ Internet 上每个 DNS 隧道工具都是这个原理的小变体：
 
 ## 实际上有多慢 — 以老牌 iodine 为例
 
-> "iodine lets you tunnel IPv4 data through a DNS server. This
-> can be useful in situations where Internet access is
-> firewalled, but DNS queries are allowed. It needs a TUN/TAP
-> device to operate. The bandwidth is asymmetrical, with a
-> measured maximum of 680 kbit/s upstream and 2.3 Mbit/s
-> downstream in a wired LAN test network. Realistic sustained
-> throughput on a Wifi network using a carrier-grade DNS cache
-> has been measured at some 50 kbit/s upstream and over 200
-> kbit/s downstream. iodine is the client application, iodined
-> is the server."
+> iodine 可以让你通过 DNS 服务器隧道传输 IPv4 数据。在互联网
+> 访问被防火墙拦截、但允许 DNS 查询的场景下，这招就管用。
+> 它需要本机有 TUN/TAP 设备才能跑。带宽是非对称的：在有线
+> LAN 测试环境测得的最大速率为 **680 kbit/s 上行 / 2.3 Mbit/s
+> 下行**。在运营商级 DNS 缓存 + WiFi 的真实场景下，持续吞吐
+> 实测约 **50 kbit/s 上行 / 200 kbit/s 下行**。`iodine` 是
+> 客户端，`iodined` 是服务端。
 >
-> — [man 8 iodine](https://linux.die.net/man/8/iodine)
+> ——译文，[man 8 iodine](https://linux.die.net/man/8/iodine)
+> （原文为英文，已译为中文）
 
 [`iodine`](https://github.com/yarrick/iodine) 是 DNS 隧道
 工具里**最老牌**的一个——项目由 Björn Andersson 和 Erik
