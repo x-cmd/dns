@@ -153,7 +153,8 @@ on this principle:
 - `iodine` — uses NULL-record queries (type 10) and
   base128/base32 of IP packets as subdomains. Multi-label
   encoding lets it stream data both ways.
-- `dnscat2` — uses TXT records with a small header for
+- [`dnscat2`](https://github.com/iagox86/dnscat2) — uses TXT
+  records with a small header for
   session multiplexing. Designed for interactive shells.
 - [`OzymanDNS`](https://github.com/janprunk/ozymandns) — older tool;
   uses base32-encoded A-record

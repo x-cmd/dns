@@ -14,7 +14,8 @@ id: x-dns-2-dns-tunneling-50-line-demo
             opaque user data; the actual name-resolution work
             is incidental. The most common forms are (a)
             IP-over-DNS (iodine) — base32/128 of IP packets
-            as subdomains; (b) interactive shells (dnscat2) —
+            as subdomains; (b) interactive shells
+            ([dnscat2](https://github.com/iagox86/dnscat2)) —
             TXT records with session IDs; (c) one-way
             exfiltration ([OzymanDNS](https://github.com/janprunk/ozymandns))
             — base32 of A-records
