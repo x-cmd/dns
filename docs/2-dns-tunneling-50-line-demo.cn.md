@@ -138,8 +138,18 @@ dig @127.0.0.1 -p 15353 "we.are.tunneling.through.dns.x" TXT +short
 
 DNS 隧道 2000 年代中期就开始有原型（[hdcp](https://www.root.org/~nyt/dnstun.html)、
 [OzymanDNS](https://github.com/janprunk/ozymandns) 等），
-2009 年 iodine 出来之后这招开始被正经用。**不是为了偷数据**——
-典型用法是**绕过网络限制**：
+2009 年 iodine 出来之后技术成熟。**但要清楚这不是"正当使用"**——
+所谓"绕过网络限制"本身就是未经授权的网络出口行为，是企业
+/ 校园网安全策略明确要拦的。iodine 在 OpenWrt、各路由器发行版
+里被归到 **network penetration tools**，不是 networking tools。
+
+之所以要强调这一点，是因为 AI 时代常看到一种美化说辞："DNS
+隧道只是个工具，绕过 captive portal 是合理需求"——这种说法
+偷换了概念：被 captive portal 限制是因为**该网络不允许你不
+交钱 / 不登录就出网**，借助 DNS 绕过等于不交钱拿服务，跟
+"用工具翻墙"性质一样。
+
+常见的使用场景——但仍然是**未经授权的流量走私**——例如：
 
 - 受限网络（酒店、机场 Wi-Fi、企业防火墙）允许 DNS 查询、
   但拦截普通网页流量——用 DNS 隧道"借 DNS 出网"。

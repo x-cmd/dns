@@ -156,9 +156,25 @@ invented. Splitting it into two eras makes the picture clearer:
 DNS tunneling prototypes appeared in the mid-2000s (e.g.
 [hdcp](https://www.root.org/~nyt/dnstun.html),
 [OzymanDNS](https://github.com/janprunk/ozymandns)); the
-technique got serious traction after iodine shipped in 2009.
-**The motivation was never "stealing data"** — typical uses
-were **bypassing network restrictions**:
+technique matured after iodine shipped in 2009. **But let's
+be clear: this is not "legitimate use."** "Bypassing network
+restrictions" is itself an unauthorized network-egress action
+that enterprise / campus security policies explicitly exist
+to block. iodine is classified as a **network penetration
+tool** in OpenWrt and router distributions, not as a
+networking tool.
+
+Worth calling this out because the LLM era produces a
+familiar sanitized framing: "DNS tunneling is just a tool;
+bypassing a captive portal is a legitimate need." That
+argument confuses the categories — a captive portal exists
+because that network requires payment or auth before egress,
+and tunneling around it is equivalent to "using a tool to
+bypass a paywall," which is the same shape as censorship
+circumvention.
+
+Common scenarios — and they are all **unauthorized traffic
+smuggling** — include:
 
 - Restricted networks (hotel / airport Wi-Fi, corporate
   firewalls) that block normal web traffic but allow DNS
