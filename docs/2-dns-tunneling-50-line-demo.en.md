@@ -228,6 +228,33 @@ None of these are bulletproof; a determined attacker with
 enough patience can evade each. The point is to raise the
 cost so the easiest path is no longer DNS.
 
+## Existing DNS-for-LLM implementations
+
+The "DNS as an LLM channel" trick has been forked into its
+own small subgenre in the last couple of years. They all use
+DNS TXT queries to send prompts and stuff the LLM reply
+into the authority's answer; they differ in protocol layer
+(chunked vs. single-shot), client (web vs. CLI), and LLM
+backend (OpenAI-compatible vs. local model).
+
+- [`mneves75/dnschat`](https://github.com/mneves75/dnschat) —
+  a React Native mobile app with a ChatGPT-style chat
+  interface that talks to an LLM entirely through DNS TXT
+  queries. **TypeScript**, created mid-2025, ~73 ⭐.
+  Consumer-facing.
+- [`deoxynet/llm-dns-proxy`](https://github.com/deoxynet/llm-dns-proxy) —
+  self-description: "LLM over DNS for WiFi Captive Portal
+  Bypass" — exactly the captive-portal scenario covered
+  earlier in this article. ~6 ⭐.
+- [`Shell-Company/dumbdns`](https://github.com/Shell-Company/dumbdns) —
+  self-description: "an LLM client implemented in a DNS
+  server using TXT queries for prompts". **Go**, created
+  mid-2024, ~7 ⭐.
+
+This repo's [`x-cmd/dns`](../)'s `llm-dns-server.ts` is the
+same idea with a multi-chunk protocol (chunked session
+protocol), in Deno / TypeScript.
+
 ## Read next
 
 - [0. DNS overview](./0-dns-overview.en.md) — the protocol

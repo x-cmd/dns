@@ -187,6 +187,27 @@ DNS 隧道在**真实场景**里很慢——上文 iodine 的数据是典型水
 没有哪个是银弹；有耐心的攻击者都能绕过。目的是抬高成本，
 让 DNS 不再是最容易的那条路。
 
+## 现有的 DNS-for-LLM 实现
+
+把 "DNS 当 LLM 通道" 这一招独立成项目的，最近几年陆续有
+几个。共同点：用 DNS TXT 查询发 prompt，权威应答里塞 LLM
+回复；区别在协议层（chunked vs. single-shot）、客户端（web
+vs. CLI）和 LLM 后端（OpenAI 兼容 vs. 本地模型）。
+
+- [`mneves75/dnschat`](https://github.com/mneves75/dnschat) ——
+  React Native 移动 app，提供一个 ChatGPT 风格的聊天界面，
+  底层完全用 DNS TXT 查询跟 LLM 通信。**TypeScript**，2025
+  年中创建，~73 ⭐。偏消费侧。
+- [`deoxynet/llm-dns-proxy`](https://github.com/deoxynet/llm-dns-proxy) ——
+  描述自述："LLM over DNS for WiFi Captive Portal Bypass"，
+  思路就是本文讲的强制门户场景。~6 ⭐。
+- [`Shell-Company/dumbdns`](https://github.com/Shell-Company/dumbdns) ——
+  描述自述："an LLM client implemented in a DNS server using
+  TXT queries for prompts"。**Go**，2024 年中创建，~7 ⭐。
+
+本仓库 [`x-cmd/dns`](../) 里的 `llm-dns-server.ts` 是同
+一思路的多块版本（chunked session protocol），懂 Deno/TS。
+
 ## 延伸阅读
 
 - [0. DNS 综述](./0-dns-overview.cn.md) —— 本文假设的协议
