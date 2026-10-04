@@ -7,12 +7,12 @@ x-json-ld:
   '@context': https://schema.org
   '@graph':
     - '@type': TechArticle
-      headline: 'DNS 隧道 —— 是什么，以及 50 行讲原理'
+      headline: 'Agent 如何借 DNS 隧道逃逸'
       inLanguage: 'zh-CN'
       about: 'DNS 作为隐蔽信道；LLM-over-DNS 变体'
 ---
 
-# DNS 隧道 —— 是什么，以及 50 行讲原理
+# Agent 如何借 DNS 隧道逃逸
 
 > "DNS 隧道"就是把 DNS 当数据通道用，而不是当名字解析用。
 > 原理和这仓库里跑的一样 —— DNS 服务用 TXT 响应返回任意

@@ -7,12 +7,12 @@ x-json-ld:
   '@context': https://schema.org
   '@graph':
     - '@type': TechArticle
-      headline: 'DNS tunneling — what it is, and 50 lines to demo it'
+      headline: 'How an Agent escapes via DNS tunneling'
       inLanguage: 'en'
       about: 'DNS as a covert channel; the LLM-over-DNS variant'
 ---
 
-# DNS tunneling — what it is, and 50 lines to demo it
+# How an Agent escapes via DNS tunneling
 
 > "DNS tunneling" is the use of DNS as a data channel, not as
 > a name resolver. The principle is the same one this repo
