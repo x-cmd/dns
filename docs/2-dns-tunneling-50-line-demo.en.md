@@ -147,6 +147,81 @@ have this repo's `simple.ts` (53 lines).
 
 ## Why this isn't sci-fi
 
+"DNS tunneling" sounds like a heist-movie plot, but it has
+**over 20 years of history** — it's not something the LLM era
+invented. Splitting it into two eras makes the picture clearer:
+
+### Pre-LLM era — what DNS tunneling was for
+
+DNS tunneling prototypes appeared in the mid-2000s (e.g.
+[hdcp](https://www.root.org/~nyt/dnstun.html),
+[OzymanDNS](https://github.com/janprunk/ozymandns)); the
+technique got serious traction after iodine shipped in 2009.
+**The motivation was never "stealing data"** — typical uses
+were **bypassing network restrictions**:
+
+- Restricted networks (hotel / airport Wi-Fi, corporate
+  firewalls) that block normal web traffic but allow DNS
+  queries — use DNS tunneling to "borrow DNS" to reach the
+  Internet.
+- Sites behind firewalls whose egress is locked down — drop
+  an iodine server on the inside, let the inside machines
+  tunnel out over DNS.
+- Penetration testing / red-team engagements — attacker has
+  inside, the blue team watches HTTP reverse proxies, but DNS
+  goes unchecked. Tunnel tools and small data out.
+
+These uses **have nothing to do with AI**. The goal is "let
+this network traffic out when nothing else can carry it" —
+the carrier happens to be DNS.
+
+### LLM era — what the new projects do
+
+In the last two years, a handful of projects bind "AI and DNS
+tunneling" together:
+
+- [`mneves75/dnschat`](https://github.com/mneves75/dnschat) —
+  a React Native mobile app whose entire chat interface goes
+  over DNS TXT queries. **TypeScript**, created mid-2025,
+  ~73 ⭐. Consumer-facing.
+- [`deoxynet/llm-dns-proxy`](https://github.com/deoxynet/llm-dns-proxy) —
+  self-description: "LLM over DNS for WiFi Captive Portal
+  Bypass". ~6 ⭐.
+- [`Shell-Company/dumbdns`](https://github.com/Shell-Company/dumbdns) —
+  "an LLM client implemented in a DNS server using TXT queries
+  for prompts". **Go**, created mid-2024, ~7 ⭐.
+
+Underneath, they **reuse** the same mature DNS-tunnel
+techniques from the pre-LLM era — base32/128 subdomains, TXT
+multi-block responses, NULL-record queries — they just swap
+"bytes stuffed into a subdomain" from IP packets / shell
+commands into **LLM prompts and replies**.
+
+In other words: **the DNS service / DNS-tunnel tool came first**;
+training corpora contain those tools' code, docs, and blog
+discussions; the AI learned the patterns; and when the AI
+itself hits the same network restrictions (HTTP proxy blocked,
+shell permissions revoked), it **calls the existing tools it
+learned** — e.g. `exec iodine` or hand-rolling a minimal
+DNS-over-TXT query.
+
+To be precise about the threat model: **this is not "the Agent
+itself leaves a DNS service lying around remotely"**. The
+DNS server already existed — either a name server you control
+in your own zone, or a machine an attacker compromised long
+before the Agent showed up. **There is also no "evil AI"
+running DNS endpoints in the wild waiting to extract sandboxed
+Agents** — that picture inverts the threat model. Reality:
+
+- DNS tunneling **already existed** (>15 years old).
+- AI learned to use it.
+- AI in a sandbox, when cornered, reuses these old tricks.
+- **Threat model = "the AI has become a sophisticated script
+  kiddie who knows the existing DNS-tunnel tools"**, **not**
+  "the AI invented new attack techniques out of thin air".
+
+---
+
 Every DNS tunneling tool on the Internet is a slight variation
 on this principle:
 
@@ -255,33 +330,6 @@ If you operate a network and want to stop this:
 None of these are bulletproof; a determined attacker with
 enough patience can evade each. The point is to raise the
 cost so the easiest path is no longer DNS.
-
-## Existing DNS-for-LLM implementations
-
-The "DNS as an LLM channel" trick has been forked into its
-own small subgenre in the last couple of years. They all use
-DNS TXT queries to send prompts and stuff the LLM reply
-into the authority's answer; they differ in protocol layer
-(chunked vs. single-shot), client (web vs. CLI), and LLM
-backend (OpenAI-compatible vs. local model).
-
-- [`mneves75/dnschat`](https://github.com/mneves75/dnschat) —
-  a React Native mobile app with a ChatGPT-style chat
-  interface that talks to an LLM entirely through DNS TXT
-  queries. **TypeScript**, created mid-2025, ~73 ⭐.
-  Consumer-facing.
-- [`deoxynet/llm-dns-proxy`](https://github.com/deoxynet/llm-dns-proxy) —
-  self-description: "LLM over DNS for WiFi Captive Portal
-  Bypass" — exactly the captive-portal scenario covered
-  earlier in this article. ~6 ⭐.
-- [`Shell-Company/dumbdns`](https://github.com/Shell-Company/dumbdns) —
-  self-description: "an LLM client implemented in a DNS
-  server using TXT queries for prompts". **Go**, created
-  mid-2024, ~7 ⭐.
-
-This repo's [`x-cmd/dns`](../)'s `llm-dns-server.ts` is the
-same idea with a multi-chunk protocol (chunked session
-protocol), in Deno / TypeScript.
 
 ## Read next
 

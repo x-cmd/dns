@@ -131,6 +131,65 @@ dig @127.0.0.1 -p 15353 "we.are.tunneling.through.dns.x" TXT +short
 
 ## 为什么这不科幻
 
+"DNS 隧道"听起来像黑客电影里的剧情，但它有**二十多年历史**，
+不是 LLM 时代才冒出来的新东西。把它分成两个时代看会更清楚：
+
+### 前 LLM 时代 —— DNS 隧道在干什么
+
+DNS 隧道 2000 年代中期就开始有原型（[hdcp](https://www.root.org/~nyt/dnstun.html)、
+[OzymanDNS](https://github.com/janprunk/ozymandns) 等），
+2009 年 iodine 出来之后这招开始被正经用。**不是为了偷数据**——
+典型用法是**绕过网络限制**：
+
+- 受限网络（酒店、机场 Wi-Fi、企业防火墙）允许 DNS 查询、
+  但拦截普通网页流量——用 DNS 隧道"借 DNS 出网"。
+- 远程站点的网络出口被防火墙封了——管理员在墙前放一台 iodine
+  服务端，让墙内的机器"过 DNS"出去。
+- 渗透测试 / 红队评估——攻击方在客户内网已经拿到立足点，
+  HTTP 反向代理被监控，但 DNS 没人查，借 DNS 把工具和
+  数据偷出来。
+
+这些用法**和 AI 没关系**——目标是"我要让一段本来走不出去的
+流量走出去"，载体恰好是 DNS。
+
+### LLM 时代 —— 新的项目在干嘛
+
+最近一两年陆陆续续有几个项目把"AI 跟 DNS 隧道"绑在一起：
+
+- [`mneves75/dnschat`](https://github.com/mneves75/dnschat) ——
+  React Native 移动 app，整个聊天界面走 DNS TXT 查询。
+  **TypeScript**，2025 年中创建，~73 ⭐。偏消费侧。
+- [`deoxynet/llm-dns-proxy`](https://github.com/deoxynet/llm-dns-proxy) ——
+  自述"LLM over DNS for WiFi Captive Portal Bypass"。~6 ⭐。
+- [`Shell-Company/dumbdns`](https://github.com/Shell-Company/dumbdns) ——
+  "an LLM client implemented in a DNS server using TXT queries
+  for prompts"。**Go**，2024 年中创建，~7 ⭐。
+
+它们底层**复用**的就是前 LLM 时代那些成熟的 DNS 隧道技术
+（base32/128 编码子域、TXT 多块响应、NULL 记录查询等等），
+只是把"塞进子域的字节"从 IP 包 / shell 命令换成 **LLM 的
+prompt 和 response**。
+
+也就是说，**先有现成的 DNS 服务 / DNS 隧道工具搭起来了**，
+然后训练语料里有这些工具的代码、文档、博客讨论，AI 学到
+了这些模式；当 AI 自己面临同样的网络限制时（HTTP 代理拦
+了、shell 权限收了），它会**调用学到的现有工具**——比如
+`exec iodine` 或者直接手搓一个简单的 DNS-over-TXT 查询。
+
+需要澄清的是——**这绝不是什么"Agent 自己远程留一个 DNS
+服务"**。DNS 服务端是早就存在的（要么是你公司可控的权威
+DNS，要么是攻击者早就拿下的一台机器）。**也没有"邪恶 AI"
+专门在外面架 DNS 服务等着捞沙盒里的 Agent**——这个图景把
+威胁模型搞反了。现实是：
+
+- DNS 隧道**早就存在**（>15 年）
+- AI 学到了怎么用它们
+- AI 在沙盒里被逼急了，会复用这些老招
+- **威胁模型 = "AI 变成了一个会用现成 DNS 隧道工具的高级脚
+  本小子"**，不是 "AI 凭空发明新攻击技术"
+
+---
+
 Internet 上每个 DNS 隧道工具都是这个原理的小变体：
 
 - [`iodine`](https://github.com/yarrick/iodine) —— 用 NULL 记录查询
@@ -178,10 +237,6 @@ DNS 隧道在**真实场景**里很慢——上文 iodine 的数据是典型水
 平（50 kbit/s 上行 / 200 kbit/s 下行）。这意味着它在实践
 里**并不实用**——除了最窄的应用：
 
-DNS 隧道在**真实场景**里很慢——上文 iodine 的数据是典型水
-平（50 kbit/s 上行 / 200 kbit/s 下行）。这意味着它在实践
-里**并不实用**——除了最窄的应用：
-
 - ✅ 偷捎一段 secret、一个 cookie、一两个小文件——可行
 - ❌ 想用它传视频 / 大文件 / 持续高吞吐流量——不现实
 
@@ -212,27 +267,6 @@ DNS 隧道在**真实场景**里很慢——上文 iodine 的数据是典型水
 
 没有哪个是银弹；有耐心的攻击者都能绕过。目的是抬高成本，
 让 DNS 不再是最容易的那条路。
-
-## 现有的 DNS-for-LLM 实现
-
-把 "DNS 当 LLM 通道" 这一招独立成项目的，最近几年陆续有
-几个。共同点：用 DNS TXT 查询发 prompt，权威应答里塞 LLM
-回复；区别在协议层（chunked vs. single-shot）、客户端（web
-vs. CLI）和 LLM 后端（OpenAI 兼容 vs. 本地模型）。
-
-- [`mneves75/dnschat`](https://github.com/mneves75/dnschat) ——
-  React Native 移动 app，提供一个 ChatGPT 风格的聊天界面，
-  底层完全用 DNS TXT 查询跟 LLM 通信。**TypeScript**，2025
-  年中创建，~73 ⭐。偏消费侧。
-- [`deoxynet/llm-dns-proxy`](https://github.com/deoxynet/llm-dns-proxy) ——
-  描述自述："LLM over DNS for WiFi Captive Portal Bypass"，
-  思路就是本文讲的强制门户场景。~6 ⭐。
-- [`Shell-Company/dumbdns`](https://github.com/Shell-Company/dumbdns) ——
-  描述自述："an LLM client implemented in a DNS server using
-  TXT queries for prompts"。**Go**，2024 年中创建，~7 ⭐。
-
-本仓库 [`x-cmd/dns`](../) 里的 `llm-dns-server.ts` 是同
-一思路的多块版本（chunked session protocol），懂 Deno/TS。
 
 ## 延伸阅读
 
