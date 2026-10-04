@@ -317,6 +317,26 @@ anomaly catches the exfil**. The signals listed under
 (high-entropy subdomains, oversized TXT, DGA-like patterns)
 are designed for exactly this kind of small-flow leakage.
 
+### Low traffic, real harm — the palace-intrigue "small dog hole"
+
+DNS tunnels aren't used at scale in the wild — 50 kbit/s can't
+sustain day-to-day C2, so attackers reach for them mostly in
+**occasional, one-off, small-data exfiltration events**. But
+**slow ≠ harmless** — what attackers want to steal is small
+to begin with: a key, a cookie, a credential, an internal
+hostname table. A few KB is enough. 50 kbit/s is plenty to
+get an SSH private key out the door in a couple of minutes.
+
+Picture it this way: DNS tunneling is the **"small dog hole"
+that palace-intrigue dramas use to pass forbidden items** — the
+walls can be high, the patrols dense, but as long as there's
+one unnoticed hole in the corner that something fits through,
+it works. DNS tunneling is the network perimeter's small dog
+hole: routine traffic monitoring won't specifically watch it,
+but **smuggling a ring (a key), a secret letter (a token), or
+a name roster (an internal hostname list)** through it is
+exactly its size.
+
 The pattern is identical: a server you control answers DNS
 queries with arbitrary bytes; a client somewhere else (often
 behind a captive portal or in a country that filters HTTP)
