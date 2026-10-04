@@ -174,6 +174,30 @@ on this principle:
   with `c.<i>.<sid>` chunked retrieval for two-way chat with
   an LLM.
 
+## How slow is it, really?
+
+DNS tunneling is **slow in practice** — the iodine numbers
+above (50 kbit/s upstream / 200 kbit/s downstream) are typical.
+The implication is that DNS tunneling is **not a practical
+general-purpose channel** — only the narrowest uses are viable:
+
+- ✅ Smuggling a small secret, a cookie, a handful of small
+  files — viable
+- ❌ Trying to move video, large files, or any sustained
+  high-throughput channel through it — unrealistic
+
+What attackers actually use DNS tunneling for is **single
+small exfiltration events** — getting a key, a credential, an
+internal hostname table out the door. That use case **is
+doable**, and it stops there. For day-to-day C2 or bulk
+data flows, the bandwidth becomes the bottleneck immediately.
+
+The flip side is good news for defenders: **catching the
+anomaly catches the exfil**. The signals listed under
+[Defenses](#defenses--what-network-operators-can-do) below
+(high-entropy subdomains, oversized TXT, DGA-like patterns)
+are designed for exactly this kind of small-flow leakage.
+
 The pattern is identical: a server you control answers DNS
 queries with arbitrary bytes; a client somewhere else (often
 behind a captive portal or in a country that filters HTTP)
