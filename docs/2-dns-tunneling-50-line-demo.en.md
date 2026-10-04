@@ -151,12 +151,19 @@ Every DNS tunneling tool on the Internet is a slight variation
 on this principle:
 
 - [`iodine`](https://github.com/yarrick/iodine) — uses NULL-record
-  queries (type 10) and base128/base32 of IP packets as
-  subdomains. Multi-label encoding lets it stream data both
-  ways. **Typical use**: when you're on hotel / airport Wi-Fi
-  or a firewalled network where normal web traffic is blocked
-  but DNS queries go through, iodine builds an IP-over-DNS
-  tunnel so you can reach the Internet.
+  queries (type 10) and base128/base32 of IPv4 packets as
+  subdomains to tunnel IP data through a DNS server.
+  **Typical use**: when you're on hotel / airport Wi-Fi or a
+  firewalled network where normal web traffic is blocked but
+  DNS queries are allowed, iodine builds an IP-over-DNS tunnel
+  so you can reach the Internet. Requires a TUN/TAP device
+  on the host. Bandwidth is **asymmetric**: measured max
+  **680 kbit/s upstream / 2.3 Mbit/s downstream** on a wired
+  LAN; realistic sustained throughput on Wi-Fi with a
+  carrier-grade DNS cache is about **50 kbit/s upstream /
+  200 kbit/s downstream**. `iodine` is the client; `iodined`
+  is the server. Source:
+  [man 8 iodine](https://linux.die.net/man/8/iodine).
 - [`dnscat2`](https://github.com/iagox86/dnscat2) — uses TXT
   records with a small header for
   session multiplexing. Designed for interactive shells.

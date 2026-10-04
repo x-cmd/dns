@@ -134,7 +134,15 @@ dig @127.0.0.1 -p 15353 "we.are.tunneling.through.dns.x" TXT +short
 Internet 上每个 DNS 隧道工具都是这个原理的小变体：
 
 - [`iodine`](https://github.com/yarrick/iodine) —— 用 NULL 记录查询
-  （type 10），把 IP 包 base128/base32 后放进子域。多标签编码支持双向流。**典型用法**：身处酒店 / 机场 Wi-Fi / 受防火墙限制的环境，常规网页流量被拦截、但允许发 DNS 查询时，借它在受限网络里建一条 IP 隧道联网。
+  （type 10），把 IPv4 包 base128/base32 后放进子域，通过 DNS
+  服务器建 IP 隧道。**典型用法**：身处酒店 / 机场 Wi-Fi /
+  受防火墙限制的环境，普通网页流量被拦截、但允许发 DNS 查
+  询时，借 iodine 在受限网络里联网。需要本机有 TUN/TAP 设备。
+  速率**不对称**：有线 LAN 实测最大 **680 kbit/s 上行 /
+  2.3 Mbit/s 下行**；真实场景（Wi-Fi + 运营商 DNS 缓存）约
+  **50 kbit/s 上行 / 200 kbit/s 下行**。`iodine` 是客户端，
+  `iodined` 是服务端。数据来自
+  [man 8 iodine](https://linux.die.net/man/8/iodine)。
 - [`dnscat2`](https://github.com/iagox86/dnscat2) —— 用 TXT
   记录加一个小头做会话多路复用。设计目标就是交互 shell。
 - [`OzymanDNS`](https://github.com/janprunk/ozymandns) ——
